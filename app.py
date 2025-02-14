@@ -18,6 +18,9 @@ app.title = 'Spotify Tracks: Visual Analysis'
 # READ FILE FROM FILE PATH
 df = pd.read_csv('./data/SpotifyTracksDataset.csv')
 
+@server.route('/alive')
+def alive():
+    return "alive"
 
 def create_graph_page_1():
     # DISTINCT SONGS ONLY
