@@ -16,19 +16,19 @@ app.title = 'Spotify Tracks: Visual Analysis'
 # df = pd.read_csv('https://...') #NEED TO UPLOAD CSV TO GITHUB
 
 # READ FILE FROM FILE PATH
-df = pd.read_csv('./data/SpotifyTracksDataset.csv')
+df: pd.DataFrame = pd.read_csv('./data/SpotifyTracksDataset.csv')
 
 @server.route('/alive')
 def alive():
     return "alive"
 
-def create_graph_page_1():
+def create_graph_page_1(dataframe: pd.DataFrame):
     # DISTINCT SONGS ONLY
-    df = pd.read_csv('./data/SpotifyTracksDataset.csv')
-    df = df.drop_duplicates(subset='track_name')
+    prepped_df = dataframe.copy()
+    prepped_df = prepped_df.drop_duplicates(subset='track_name')
 
     # SORTING BY POPULARITY
-    sorted_df = df.sort_values(by='popularity', ascending=False)
+    sorted_df = prepped_df.sort_values(by='popularity', ascending=False)
 
     # TO GET TOP 10 SONGS
     top_songs = sorted_df.head(10)
@@ -44,9 +44,10 @@ def create_graph_page_1():
     return dcc.Graph(figure=fig)
 
 
-def create_graph_page_2():
+def create_graph_page_2(dataframe: pd.DataFrame):
     # FIND THE TOP 10 SONGS
-    sorted_df = df.sort_values(by='popularity', ascending=False)
+    prepped_df = dataframe.copy()
+    sorted_df = prepped_df.sort_values(by='popularity', ascending=False)
 
     # ENSURE UNIQUE SONGS
     top_songs = sorted_df.drop_duplicates(subset='track_name', keep='first')
@@ -79,14 +80,15 @@ def create_graph_page_2():
     return dcc.Graph(figure=fig)
 
 
-def create_graph_page_3():
+def create_graph_page_3(dataframe: pd.DataFrame):
     # FILTER AND FIND PERCENTAGES
-    count_maj_explicit = df[(df['mode'] == 1) & (df['explicit'] == True)].shape[0]
-    count_maj_total = df[df['mode'] == 1].shape[0]
+    prepped_df = dataframe.copy()
+    count_maj_explicit = prepped_df[(prepped_df['mode'] == 1) & (prepped_df['explicit'] == True)].shape[0]
+    count_maj_total = prepped_df[prepped_df['mode'] == 1].shape[0]
     percentage_maj_explicit = count_maj_explicit / count_maj_total * 100
 
-    count_min_explicit = df[(df['mode'] == 0) & (df['explicit'] == True)].shape[0]
-    count_min_total = df[df['mode'] == 0].shape[0]
+    count_min_explicit = prepped_df[(prepped_df['mode'] == 0) & (prepped_df['explicit'] == True)].shape[0]
+    count_min_total = prepped_df[prepped_df['mode'] == 0].shape[0]
     percentage_min_explicit = count_min_explicit / count_min_total * 100
 
     # NEW DF FOR THE PIE CHART
@@ -106,13 +108,13 @@ def create_graph_page_3():
     return dcc.Graph(figure=fig)
 
 
-def create_graph_page_4():
+def create_graph_page_4(dataframe: pd.DataFrame):
     # DISTINCT SONGS ONLY
-    df = pd.read_csv('./data/SpotifyTracksDataset.csv')
-    df = df.drop_duplicates(subset='track_name')
+    prepped_df = dataframe.copy()
+    prepped_df = prepped_df.drop_duplicates(subset='track_name')
 
     # SORTING BY POPULARITY
-    sorted_df = df.sort_values(by='popularity', ascending=False)
+    sorted_df = prepped_df.sort_values(by='popularity', ascending=False)
 
     # TO GET TOP 10 SONGS
     top_songs = sorted_df.head(10)
@@ -131,9 +133,11 @@ def create_graph_page_4():
     return dcc.Graph(figure=fig)
 
 
-def create_graph_page_5a():
+def create_graph_page_5a(dataframe: pd.DataFrame):
+    prepped_df = dataframe.copy()
+
     # TO COUNT EACH OCCURENCE OF ALL TIME SIGNATURES
-    time_sig_count = df['time_signature'].value_counts().reset_index()
+    time_sig_count = prepped_df['time_signature'].value_counts().reset_index()
     time_sig_count.columns = ['time_signature', 'count']
 
     # CREATING A PIE CHART
@@ -149,12 +153,13 @@ def create_graph_page_5a():
     return dcc.Graph(figure=fig)
 
 
-def create_graph_page_5b():
+def create_graph_page_5b(dataframe: pd.DataFrame):
+    prepped_df = dataframe.copy()
     # CATEGORIZING SONGS BY METER
-    df['meter'] = df['time_signature'].apply(lambda x: 'Even Meter' if x == 4 else 'Odd Meter')
+    prepped_df['meter'] = prepped_df['time_signature'].apply(lambda x: 'Even Meter' if x == 4 else 'Odd Meter')
 
     # CALCULATING POPULARITY BY METER
-    meter_pop = df.groupby('meter')['popularity'].sum().reset_index()
+    meter_pop = prepped_df.groupby('meter')['popularity'].sum().reset_index()
 
     # CREATING A BAR CHART
     fig = px.bar(meter_pop, x='meter', y='popularity',
@@ -167,12 +172,13 @@ def create_graph_page_5b():
     return dcc.Graph(figure=fig)
 
 
-def create_graph_page_6():
+def create_graph_page_6(dataframe: pd.DataFrame):
+    prepped_df = dataframe.copy()
     # CONVERTING SONG DURATION TO MINUTES
-    df['duration_min'] = df['duration_ms'] / 60000
+    prepped_df['duration_min'] = prepped_df['duration_ms'] / 60000
 
     # GROUPING BY GENRE AND CALCULATING AVG SONG LENGTH
-    avg_length = df.groupby('track_genre')['duration_min'].mean().reset_index()
+    avg_length = prepped_df.groupby('track_genre')['duration_min'].mean().reset_index()
 
     # SORT BY AVG LENGTH
     top10 = avg_length.sort_values(by='duration_min', ascending=False).head(10)
@@ -188,10 +194,10 @@ def create_graph_page_6():
     return dcc.Graph(figure=fig)
 
 
-def spotify_tracks_data():
+def spotify_tracks_data(dataframe: pd.DataFrame):
     return dash_table.DataTable(
-        data=df.head().to_dict('records'),
-        columns=[{'name': i, 'id': i} for i in df.columns],
+        data=dataframe.head().to_dict('records'),
+        columns=[{'name': i, 'id': i} for i in dataframe.columns],
         style_data={
             'backgroundColor': 'rgb(51, 89, 122)',
             'color': 'white',
@@ -251,7 +257,7 @@ home_page_layout = dbc.Container([
         dbc.Col([
             dbc.Card(
                 [html.H3('''The Dataset:''', className='text-decoration-underline'),
-                 spotify_tracks_data()],
+                 spotify_tracks_data(dataframe=df)],
                 body=True,
                 color='dark'
             )
@@ -273,7 +279,7 @@ page_1_layout = dbc.Container([
                     className='text-muted')
         ], width=12, className='mt-3')
     ]),
-    create_graph_page_1(),
+    create_graph_page_1(dataframe=df),
     html.H5('''Looks like people overwhelmingly enjoy Latin music above all else,
     which makes sense considering Spanish is the second most spoken native language. 
     Bad Bunny is doing pretty well, making up half of the top 10 songs!''', className='text-muted mt-3')
@@ -292,7 +298,7 @@ page_2_layout = dbc.Container([
                     className='text-muted')
         ], width=12, className='mt-3')
     ]),
-    create_graph_page_2(),
+    create_graph_page_2(dataframe=df),
     html.H5('''Seems like that hit song tempo is about 113 BPM - checks out to me!''',
             className='text-muted mt-3')
 ])
@@ -311,7 +317,7 @@ page_3_layout = dbc.Container([
                     className='text-muted')
         ], width=12, className='mt-3')
     ]),
-    create_graph_page_3(),
+    create_graph_page_3(dataframe=df),
     html.H5('''Unsurprisingly, more explicit songs are in minor keys than major. 
     However, there is less of a difference here than I imagined there would be, 
     as only about 10% more explicit songs are in minor keys than major keys. ''',
@@ -334,7 +340,7 @@ page_4_layout = dbc.Container([
                     className='text-muted')
         ], width=12, className='mt-3')
     ]),
-    create_graph_page_4(),
+    create_graph_page_4(dataframe=df),
     html.H5('''Looks like over half of the 10 most popular songs are on the more negative side. 
     Pretty surprising to me! ''',
             className='text-muted mt-3')
@@ -357,8 +363,8 @@ page_5_layout = dbc.Container([
                     className='text-muted')
         ], width=12, className='mt-3')
     ]),
-    create_graph_page_5a(),
-    create_graph_page_5b(),
+    create_graph_page_5a(dataframe=df),
+    create_graph_page_5b(dataframe=df),
     html.H5('''Almost 90% of songs from this dataset are in 4/4! This will bias the data in the bar chart, however. 
     We see that even meter songs (for this dataset, that's any song that's not in 4) are much more popular. 
     You could also argue that the reason so many songs in this dataset are in 4/4 in the first place is because 
@@ -381,31 +387,13 @@ page_6_layout = dbc.Container([
                     className='text-muted')
         ], width=12, className='mt-3')
     ]),
-    create_graph_page_6(),
+    create_graph_page_6(dataframe=df),
     html.H5(''' Had a feeling I'd find metal somewhere in this list! Considering these are not your typical 
     radio-friendly genres, it's not too surprising to see these as having the longest average song lengths. This 
     observation supports the idea that hit songs lie within a certain range - all of these genres have an average 
     song length well over 3 minutes!''',
             className='text-muted mt-3')
 ])
-
-
-def render_page_content(page):
-    if page == '/':
-        return home_page_layout
-    elif page == '/page-1':
-        return page_1_layout
-    elif page == '/page-2':
-        return page_2_layout
-    elif page == '/page-3':
-        return page_3_layout
-    elif page == '/page-4':
-        return page_4_layout
-    elif page == '/page-5':
-        return page_5_layout
-    elif page == '/page-6':
-        return page_6_layout
-
 
 sidebar_style = {
     'position': 'fixed',
